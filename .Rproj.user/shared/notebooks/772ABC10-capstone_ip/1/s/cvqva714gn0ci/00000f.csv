@@ -1,0 +1,13 @@
+"0","sales_qty_city <- sales_clean %>% "
+"0","  group_by(Product.line, City, Branch) %>%"
+"0","  filter() %>% "
+"0","  summarise(count_qty=sum(Quantity)) %>% "
+"0","  arrange(-count_qty) %>% "
+"0","  mutate(label = glue("
+"0","    ""Category: {Product.line} "
+"0","     City: {City} "
+"0","     Count: {count_qty}""))"
+"1","[38;5;251m`summarise()` has grouped output by 'Product.line', 'City'. You can override using the `.groups`
+argument.[39m
+"
+"0","sales_qty_city"

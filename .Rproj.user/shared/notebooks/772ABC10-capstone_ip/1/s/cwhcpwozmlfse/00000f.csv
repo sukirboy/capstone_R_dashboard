@@ -1,0 +1,8 @@
+"0","label_dolar <- label_dollar("
+"0","  accuracy = NULL,"
+"0","  scale = 1,"
+"0","  prefix = ""$ "","
+"0","  suffix = """","
+"0","  big.mark = "","","
+"0","  decimal.mark = ""."","
+"0","  trim = TRUE)"

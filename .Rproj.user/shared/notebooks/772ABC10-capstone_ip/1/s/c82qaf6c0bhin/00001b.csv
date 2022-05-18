@@ -1,0 +1,6 @@
+"0","hc_payment <- groupby_payment %>% "
+"0","  hchart(""pie"", hcaes(x = Payment, y = count_qty),) %>% "
+"0","    hc_tooltip(pointFormat = paste('{point.y} items<br/><b>{point.percentage:.1f}%</b>'))"
+"0","    #hc_xAxis(categories = data$category) %>%"
+"0",""
+"0","hc_payment"

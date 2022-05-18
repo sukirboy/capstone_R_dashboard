@@ -1,0 +1,35 @@
+library(shiny)
+
+library(shinydashboard)
+
+library(tidyverse)
+library(scales)
+library(glue)
+library(plotly)
+library(lubridate)
+library(DT)
+
+
+# Read Data
+vids <- read.csv("youtubetrends.csv", stringsAsFactors = T) 
+
+
+#Cleansing Data 
+
+vids_clean <- vids %>% 
+  select(-c(comments_disabled,ratings_disabled,video_error_or_removed)) %>% # deselect beberapa kolom
+  mutate(
+    publish_time = ymd_hms(publish_time),# mengubah tipe data
+    trending_date = ymd(trending_date),
+    title = as.character(title),
+    channel_title = as.character(channel_title),
+    likesp = likes/views, # menambahkan kolom baru
+    dislikep = dislikes/views,
+    comentp = comment_count/views
+  )
+
+vids_count <- vids_clean %>% 
+  group_by(category_id) %>% 
+  summarise(count=n()) %>% 
+  ungroup() %>% 
+  arrange(-count)

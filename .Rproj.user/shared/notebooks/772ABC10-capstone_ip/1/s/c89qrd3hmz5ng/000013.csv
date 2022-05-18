@@ -1,0 +1,7 @@
+"0","groupby_payment <- sales_clean %>% "
+"0","  group_by(Payment) %>% "
+"0","  summarise(count_qty=n()) %>% "
+"0","  ungroup()  %>% "
+"0","  arrange(-count_qty)"
+"0",""
+"0","groupby_payment"

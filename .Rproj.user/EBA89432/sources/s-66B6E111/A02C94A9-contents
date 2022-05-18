@@ -1,0 +1,83 @@
+dashboardPage(
+  skin = "green",
+  
+  dashboardHeader(
+    title = "Tugas LBB Sukirboy"
+    
+  ),
+  
+  
+  dashboardSidebar(
+    sidebarMenu(
+      menuItem("Dashboard", tabName = "dashboard", icon = icon("dashboard")),
+      menuItem("Widgets", tabName = "widgets", icon = icon("th")),
+      menuItem("Dataset", tabName = "dataset", icon = icon("database"))
+    )
+    
+  ),
+  
+  
+  dashboardBody(
+    
+    tabItems(
+      
+      tabItem(
+        tabName = "dashboard",
+        fluidRow(
+          infoBox(title = "Total Video Count", 
+                  width = 6, 
+                  color = "red",
+                  icon = icon("youtube"),
+                  value = nrow(vids_clean)),
+          infoBox(title = "Total Trending Channel", 
+                  width = 6, 
+                  color = "olive",
+                  icon = icon("headset"),
+                  value = length(unique(vids_clean$channel_title)))
+        ),
+        
+        fluidRow(
+          box(title = "Trending Categories of YouTube US 2017", 
+              width = 3, 
+              plotlyOutput("plot1"))
+        ),
+        
+      ),
+      
+      tabItem(
+        tabName = "widgets",
+        fluidRow(
+          box(width = 12,
+              selectInput(
+                inputId = "input_category",
+                label = "Choose Video Category",
+                choices = vids_clean$category_id,
+                selected = NULL)
+              )
+        ),
+        
+        fluidRow(
+          
+          box(width = 6,
+              plotlyOutput("plot2_channel")),
+          
+          box(width = 6,
+              plotlyOutput("plot2_viewers"))
+          
+        )
+        
+      ),
+      
+      tabItem(
+        tabName = "dataset",
+        fluidRow(
+          box(width = 12,
+              dataTableOutput("data_table_youtube"))
+        )
+        
+      )
+      
+    )
+    
+  )
+)

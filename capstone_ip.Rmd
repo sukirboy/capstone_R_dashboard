@@ -1,0 +1,392 @@
+---
+title: "casptone_IP"
+output: html_document
+date: '2022-05-13'
+---
+```{r}
+library(tidyverse)
+library(ggpubr)
+library(scales)
+library(glue)
+library(plotly)
+library(lubridate)
+library(highcharter)
+```
+
+Sumber data : https://www.kaggle.com/datasets/aungpyaeap/supermarket-sales
+
+```{r}
+sales <- read.csv("supermarket_sales.csv", stringsAsFactors = T) 
+
+head(sales)
+
+```
+
+
+
+```{r}
+str(sales)
+```
+
+```{r}
+filter(.data = sales_clean,
+       Gender == "Male")
+```
+
+
+```{r}
+sales_clean <- sales %>% 
+  
+  mutate(
+    
+    DateTime = mdy_hm(paste(Date,Time))
+  )%>% 
+select(-c(gross.margin.percentage,gross.income,Rating, Date, Time))
+sales_clean
+```
+Kami akan menampilkan
+
+Overview : 
+1. Barchat yang menampilkan Productline yang paling laris, dilihat dari jumlah penjualan
+2. Barchat yang menampilkan Productline yang menghasilkan uang, dilihat dari jumlah Total
+3. Info Total Barang yg terjual secara keseluruhan
+4. Info Total uang yang keluar secara keseluruhan
+5. Dougnat yang menampilkan kebnaykan orang menggunakan payment apa
+6. Dougnat yang menampilkan customer type apa
+7. Dougnat yang menampilkan gender dari transaksi ini
+8. Dougnat yang menampilkan kota ynag berbelanja dari transaksi 
+
+
+Detail :
+
+1. Barchat Producline berdasarkan quantinty dan kota (bisa diselect by kota)
+2. Barchat Producline berdasarkan quantinty dan sex (bisa diselect by sex)
+3. Barchat Producline berdasarkan quantinty dan members (bisa diselect by members)
+4. Barchat Producline berdasarkan quantinty dan payment (bisa diselect by payment)
+
+5. Line Chart Productline by quantity Bisa digeser berdasarkan bulan ** (klo keburu)
+
+```{r}
+label_dolar <- label_dollar(
+  accuracy = NULL,
+  scale = 1,
+  prefix = "$ ",
+  suffix = "",
+  big.mark = ",",
+  decimal.mark = ".",
+  trim = TRUE)
+```
+
+
+```{r}
+sales_count_qty <- sales_clean %>% 
+  group_by(Product.line) %>% 
+  summarise(count_qty=sum(Quantity)) %>% 
+  ungroup() %>% 
+  arrange(-count_qty)%>% 
+  mutate(label = glue(
+    "Category: {Product.line}
+     Count: {count_qty}"
+  ))
+
+sales_count_qty
+```
+```{r}
+plot_product_qty <- ggplot(data = sales_count_qty, aes(x = count_qty, 
+                              y = reorder(Product.line, count_qty), # reorder(A, berdasarkan B)
+                              text = label)) + 
+  geom_col(aes(fill = count_qty)) +
+  scale_fill_gradient(low="#588db6", high="black") +
+  labs(title = "Categories Products that are most sold in supermarkets in 2019",
+       x = "Categories Product Count",
+       y = NULL) +
+  theme_minimal() +
+  theme(legend.position = "none") 
+
+
+ggplotly(plot_product_qty, tooltip = "text")
+```
+
+```{r}
+sales_count_money <- sales_clean %>% 
+  group_by(Product.line) %>% 
+  summarise(count_qty=sum(Total)) %>% 
+  ungroup() %>% 
+  arrange(-count_qty)%>% 
+  mutate(label = glue(
+    "Category: {Product.line}
+     Count: {label_dolar(count_qty)}"
+  ))
+
+sales_count_money
+```
+```{r}
+plot2 <- ggplot(sales_count_money, aes(x = count_qty, 
+                              y = reorder(Product.line, count_qty), # reorder(A, berdasarkan B)
+                              text = label)) + 
+  geom_col(aes(fill = count_qty)) +
+  scale_fill_gradient(low="#588db6", high="black") +
+  labs(title = "Categories Products that are most sold in supermarkets in 2019",
+       x = "Categories Product Count",
+       y = NULL) +
+  scale_x_continuous(labels = dollar,limits = c(0, 60000))+
+  theme_minimal() +
+  theme(legend.position = "none") 
+
+
+ggplotly(plot2, tooltip = "text")
+```
+
+
+
+```{r}
+qty_all <- sales_clean %>% 
+  summarise(sum_qty = sum(Quantity), sum_total = sum(Total))
+
+qty_all
+```
+```{r}
+groupby_payment <- sales_clean %>% 
+  group_by(Payment) %>% 
+  summarise(count_qty=n()) %>% 
+  ungroup()  %>% 
+  arrange(-count_qty)
+
+groupby_payment
+```
+```{r}
+
+# Compute percentages
+groupby_payment$fraction = groupby_payment$count_qty / sum(groupby_payment$count_qty)
+
+# Compute the cumulative percentages (top of each rectangle)
+groupby_payment$ymax = cumsum(groupby_payment$fraction)
+
+# Compute the bottom of each rectangle
+groupby_payment$ymin = c(0, head(groupby_payment$ymax, n=-1))
+
+plot_groupby_payment <- ggplot(groupby_payment, aes(ymax=ymax, ymin=ymin, xmax=4, xmin=3, fill=Payment)) +
+     geom_rect() +
+     coord_polar(theta="y") + # Try to remove that to understand how the chart is built initially
+     xlim(c(2, 4))+
+     theme_void() +
+     theme(legend.position = "none")
+
+plot_groupby_payment
+```
+
+```{r}
+hc_payment <- groupby_payment %>% 
+  hchart("pie", hcaes(x = Payment, y = count_qty),) %>% 
+    hc_tooltip(pointFormat = paste('{point.y} items<br/><b>{point.percentage:.1f}%</b>'))
+    #hc_xAxis(categories = data$category) %>%
+
+hc_payment
+```
+
+
+```{r}
+groupby_gender <- sales_clean %>% 
+  group_by(Gender) %>% 
+  summarise(count_qty=n()) %>% 
+  ungroup() %>% 
+  arrange(-count_qty)
+
+groupby_gender
+```
+
+```{r}
+hc_gender <- groupby_gender %>% 
+  hchart("pie", hcaes(x = Gender, y = count_qty),) %>%
+    hc_chart(options3d = list(enabled = TRUE, beta = 0, alpha = 60)) %>% 
+    hc_tooltip(pointFormat = paste('{point.y} items<br/><b>{point.percentage:.1f}%</b>')) %>% 
+    #hc_xAxis(categories = data$category) %>%
+    hc_plotOptions(pie = list(depth = 70))
+
+hc_gender
+```
+
+
+```{r}
+groupby_member <- sales_clean %>% 
+  group_by(Customer.type) %>% 
+  summarise(count_qty=n()) %>% 
+  ungroup() %>% 
+  arrange(-count_qty)
+
+groupby_member
+```
+
+```{r}
+hc_member <- groupby_member %>% 
+  hchart("pie", hcaes(x = Customer.type, y = count_qty),) %>%
+    hc_chart(options3d = list(enabled = TRUE, beta = 0, alpha = 60)) %>% 
+    hc_tooltip(pointFormat = paste('{point.y} items<br/><b>{point.percentage:.1f}%</b>')) %>% 
+    #hc_xAxis(categories = data$category) %>%
+    hc_plotOptions(pie = list(depth = 70))
+
+hc_member
+```
+
+
+```{r}
+groupby_city <- sales_clean %>% 
+  group_by(City) %>% 
+  summarise(count_qty=n()) %>% 
+  ungroup() %>% 
+  arrange(-count_qty)
+
+groupby_city
+```
+```{r}
+hc_city <- groupby_city %>% 
+  hchart("pie", hcaes(x = City, y = count_qty),) %>%
+    hc_chart(options3d = list(enabled = TRUE, beta = 0, alpha = 60)) %>% 
+    hc_tooltip(pointFormat = paste('{point.y} items<br/><b>{point.percentage:.1f}%</b>')) %>% 
+    #hc_xAxis(categories = data$category) %>%
+    hc_plotOptions(pie = list(depth = 70))
+
+hc_city
+```
+
+
+
+```{r}
+sales_max_cogs <- sales_clean %>% 
+  group_by(Product.line) %>% 
+  summarise(count_cogs=sum(cogs)) %>% 
+  ungroup() %>% 
+  arrange(-count_cogs) %>% 
+  top_n(1)
+
+sales_max_cogs
+```
+
+```{r}
+
+sales_max_city <- sales_clean %>% 
+  group_by(City, Branch) %>% 
+  summarise(count_qty=sum(Quantity),count_cogs=sum(cogs)) %>% 
+  ungroup() %>% 
+  arrange(-count_qty) %>% 
+  top_n(1)
+
+sales_max_city
+```
+Detail :
+
+1. Barchat Producline berdasarkan quantinty dan kota (bisa diselect by kota)
+2. Barchat Producline berdasarkan quantinty dan sex (bisa diselect by sex)
+3. Barchat Producline berdasarkan quantinty dan members (bisa diselect by members)
+4. Barchat Producline berdasarkan quantinty dan payment (bisa diselect by payment)
+
+```{r}
+sales_clean
+```
+```{r}
+sales_qty_city <- sales_clean %>% 
+  group_by(Product.line, City, Branch) %>%
+  filter() %>% 
+  summarise(count_qty=sum(Quantity)) %>% 
+  arrange(-count_qty) %>% 
+  mutate(label = glue(
+    "Category: {Product.line} 
+     City: {City} 
+     Count: {count_qty}"))
+
+sales_qty_city
+```
+
+```{r}
+
+plot_product_city <- ggplot(data = sales_qty_city, mapping = aes(x = count_qty, y = reorder(Product.line, count_qty),text = label)) +
+  geom_col(mapping = aes(fill = City), position = "stack") +
+  labs(x = "Quantity Of Sales", y = NULL,
+       fill = NULL,
+       title = "Category Products with Highest Quantity Of Sales By City") +
+  scale_fill_brewer(palette = "Blues") +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+
+ggplotly(plot_product_city, tooltip = "text")
+```
+```{r}
+sales_qty_sex <- sales_clean %>% 
+  group_by(Product.line, Gender) %>%
+  summarise(count_qty=sum(Quantity)) %>% 
+  arrange(-count_qty) %>% 
+  mutate(label = glue(
+    "Category: {Product.line} 
+     Gender: {Gender} 
+     Count: {count_qty}"))
+
+sales_qty_sex
+```
+```{r}
+plot_product_sex <- ggplot(sales_qty_sex, mapping = aes(x = count_qty, y = reorder(Product.line, count_qty),text = label)) +
+  geom_col(mapping = aes(fill = Gender), position = "stack") +
+  labs(x = "Quantity Of Sales", y = NULL,
+       fill = NULL,
+       title = "Category Products with Highest Quantity Of Sales By Gender") +
+  scale_fill_brewer(palette = "Greens") +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+
+ggplotly(plot_product_sex, tooltip = "text")
+```
+
+```{r}
+sales_qty_payment <- sales_clean %>% 
+  group_by(Product.line, Payment) %>%
+  summarise(count_qty=sum(Quantity)) %>% 
+  arrange(-count_qty) %>% 
+  mutate(label = glue(
+    "Category: {Product.line} 
+     Payment: {Payment} 
+     Count: {count_qty}"))
+
+sales_qty_payment
+```
+
+```{r}
+plot_product_payment <- ggplot(sales_qty_payment, mapping = aes(x = count_qty, y = reorder(Product.line, count_qty),text = label)) +
+  geom_col(mapping = aes(fill = Payment), position = "stack") +
+  labs(x = "Quantity Of Sales", y = NULL,
+       fill = NULL,
+       title = "Category Products with Highest Quantity Of Sales By Payment") +
+  scale_fill_brewer(palette = "PuBu") +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+
+ggplotly(plot_product_payment, tooltip = "text")
+```
+```{r}
+sales_qty_members <- sales_clean %>% 
+  group_by(Product.line, Customer.type) %>%
+  summarise(count_qty=sum(Quantity)) %>% 
+  arrange(-count_qty) %>% 
+  mutate(label = glue(
+    "Category: {Product.line} 
+     Customer Type: {Customer.type} 
+     Count: {count_qty}"))
+
+sales_qty_members
+```
+
+```{r}
+plot_product_members <- ggplot(sales_qty_members, mapping = aes(x = count_qty, y = reorder(Product.line, count_qty),text = label)) +
+  geom_col(mapping = aes(fill = Customer.type), position = "stack") +
+  labs(x = "Quantity Of Sales", y = NULL,
+       fill = NULL,
+       title = "Category Products with Highest Quantity Of Sales By Member") +
+  scale_fill_brewer(palette = "GnBu") +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+
+ggplotly(plot_product_members, tooltip = "text")
+```
+

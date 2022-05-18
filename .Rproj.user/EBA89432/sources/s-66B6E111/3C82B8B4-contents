@@ -1,0 +1,206 @@
+shinyServer(function(input, output) {
+  
+  #Barchat product category product to amount transaction
+  output$plot_product_qty <- renderPlotly({
+    
+    sales_count_qty <- sales_clean %>% 
+      group_by(Product.line) %>% 
+      summarise(count_qty=sum(Quantity)) %>% 
+      ungroup() %>% 
+      arrange(-count_qty)%>% 
+      mutate(label = glue(
+        "Category: {Product.line}
+        Count: {count_qty}"
+      ))
+    
+    plot_product_qty <- ggplot(data = sales_count_qty, aes(x = count_qty, 
+                                                           y = reorder(Product.line, count_qty), # reorder(A, berdasarkan B)
+                                                           text = label)) + 
+      geom_col(aes(fill = count_qty)) +
+      scale_fill_gradient(low="#00a951", high="black") +
+      labs(
+           x = "Count of Sold",
+           y = NULL) +
+      theme_minimal() +
+      theme(legend.position = "none") 
+    
+    
+    ggplotly(plot_product_qty, tooltip = "text")
+    
+  })
+  
+  #Barchat product category product to value of cash  
+  output$plot_product_money <- renderPlotly({
+    
+    sales_count_money <- sales_clean %>% 
+      group_by(Product.line) %>% 
+      summarise(count_qty=sum(Total)) %>% 
+      ungroup() %>% 
+      arrange(-count_qty)%>% 
+      mutate(label = glue(
+        "Category: {Product.line}
+        Count: {label_dolar(count_qty)}"
+      ))
+    
+    plot_product_money <- ggplot(sales_count_money, aes(x = count_qty, 
+                                           y = reorder(Product.line, count_qty), # reorder(A, berdasarkan B)
+                                           text = label)) + 
+      geom_col(aes(fill = count_qty)) +
+      scale_fill_gradient(low="red", high="black") +
+      labs(x = "Value Of Money",
+           y = NULL) +
+      scale_x_continuous(labels = dollar,limits = c(0, 60000))+
+      theme_minimal() +
+      theme(legend.position = "none") 
+    
+    
+    ggplotly(plot_product_money, tooltip = "text")
+    
+  })
+  
+  #Barchat product category product to value of cash  
+  output$plot_product_money <- renderPlotly({
+    
+    sales_count_money <- sales_clean %>% 
+      group_by(Product.line) %>% 
+      summarise(count_qty=sum(Total)) %>% 
+      ungroup() %>% 
+      arrange(-count_qty)%>% 
+      mutate(label = glue(
+        "Category: {Product.line}
+        Count: {label_dolar(count_qty)}"
+      ))
+    
+    plot_product_money <- ggplot(sales_count_money, aes(x = count_qty, 
+                                                        y = reorder(Product.line, count_qty), # reorder(A, berdasarkan B)
+                                                        text = label)) + 
+      geom_col(aes(fill = count_qty)) +
+      scale_fill_gradient(low="red", high="black") +
+      labs(x = "Value Of Money",
+           y = NULL) +
+      scale_x_continuous(labels = dollar,limits = c(0, 60000))+
+      theme_minimal() +
+      theme(legend.position = "none") 
+    
+    
+    ggplotly(plot_product_money, tooltip = "text")
+    
+  })
+  
+  #Piechart product category product to value of cash  
+  output$pie_qty_payment <- renderHighchart({
+    
+    
+    hc_payment <- groupby_payment %>% 
+      hchart("pie", hcaes(x = Payment, y = count_qty),) %>% 
+      hc_tooltip(pointFormat = paste('{point.y} items<br/><b>{point.percentage:.1f}%</b>'))
+    
+  })
+  
+  
+  #Piechart Transaction By Payment 
+  output$pie_qty_payment <- renderHighchart({
+    
+    
+    hc_payment <- groupby_payment %>% 
+      hchart("pie", hcaes(x = Payment, y = count_qty),) %>% 
+      hc_tooltip(pointFormat = paste('{point.y} items<br/><b>{point.percentage:.1f}%</b>'))
+    
+  })
+  
+  
+  #Piechart Transaction By Payment 
+  output$pie_qty_city <- renderHighchart({
+    
+    hc_city <- groupby_city %>% 
+      hchart("pie", hcaes(x = City, y = count_qty),) %>%
+      hc_tooltip(pointFormat = paste('{point.y} items<br/><b>{point.percentage:.1f}%</b>'))
+      
+    
+  })
+  
+  
+  
+  #Piechart Transaction By Members 
+  output$pie_qty_members <- renderHighchart({
+    
+    hc_member <- groupby_member %>% 
+      hchart("pie", hcaes(x = Customer.type, y = count_qty),) %>%
+      hc_tooltip(pointFormat = paste('{point.y} items<br/><b>{point.percentage:.1f}%</b>')) 
+  })
+  
+  #Piechart Transaction By Gender 
+  output$pie_qty_gender <- renderHighchart({
+    
+    hc_gender <- groupby_gender %>% 
+      hchart("pie", hcaes(x = Gender, y = count_qty),) %>%
+      hc_tooltip(pointFormat = paste('{point.y} items<br/><b>{point.percentage:.1f}%</b>')) 
+    
+    
+  })
+  
+  #Barchat product category x city
+  output$plot_product_city <- renderPlotly({
+  
+    if(input$input_city == "")
+    {
+        sales_qty_city <- sales_clean %>% 
+            group_by(Product.line, City) %>%
+            filter() %>% 
+            summarise(count_qty=sum(Quantity)) %>% 
+            arrange(-count_qty) %>% 
+            mutate(label = glue(
+              "Category: {Product.line} 
+               City: {City} 
+               Count: {count_qty}"))
+        
+        plot_product_city <- ggplot(data = sales_qty_city, mapping = aes(x = count_qty, y = reorder(Product.line, count_qty),text = label)) +
+          geom_col(mapping = aes(fill = City), position = "stack") +
+          labs(x = "Quantity Of Sales", y = NULL,
+               fill = NULL,
+               title = "Category Products with Highest Quantity Of Sales By City") +
+          scale_fill_brewer(palette = "Blues") +
+          theme_minimal() +
+          theme(legend.position = "none")
+        
+        
+        ggplotly(plot_product_city, tooltip = "text")
+    }
+    else
+    {
+      
+      sales_qty_city <- sales_clean %>% 
+        filter(City==input$input_city) %>% 
+        group_by(Product.line, City) %>%
+        filter() %>% 
+        summarise(count_qty=sum(Quantity)) %>% 
+        arrange(-count_qty) %>% 
+        mutate(label = glue(
+          "Category: {Product.line} 
+               City: {City} 
+               Count: {count_qty}"))
+      
+      plot_product_city <- ggplot(data = sales_qty_city, mapping = aes(x = count_qty, y = reorder(Product.line, count_qty),text = label)) +
+        geom_col(mapping = aes(fill = City), position = "stack") +
+        labs(x = "Quantity Of Sales", y = NULL,
+             fill = NULL,
+             title = glue("Category Products with Highest Quantity Of Sales By {input$input_city} City")) +
+        if(input$input_city == "")
+        {
+          
+        }
+        
+        scale_fill_brewer(palette = "Blues") +
+        theme_minimal() +
+        theme(legend.position = "none")
+      
+      
+      ggplotly(plot_product_city, tooltip = "text")
+        
+    }
+    
+  })
+  
+  
+  
+})

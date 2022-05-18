@@ -1,0 +1,12 @@
+"0",""
+"0","sales_max_city <- sales_clean %>% "
+"0","  group_by(City, Branch) %>% "
+"0","  summarise(count_qty=sum(Quantity),count_cogs=sum(cogs)) %>% "
+"0","  ungroup() %>% "
+"0","  arrange(-count_qty) %>% "
+"0","  top_n(1)"
+"1","[38;5;251m`summarise()` has grouped output by 'City'. You can override using the `.groups` argument.[39m
+"
+"1","[38;5;251mSelecting by count_cogs[39m
+"
+"0","sales_max_city"

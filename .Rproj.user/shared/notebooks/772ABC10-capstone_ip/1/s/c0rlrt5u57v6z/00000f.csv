@@ -1,0 +1,8 @@
+"0","hc_member <- groupby_member %>% "
+"0","  hchart(""pie"", hcaes(x = Customer.type, y = count_qty),) %>%"
+"0","    hc_chart(options3d = list(enabled = TRUE, beta = 0, alpha = 60)) %>% "
+"0","    hc_tooltip(pointFormat = paste('{point.y} items<br/><b>{point.percentage:.1f}%</b>')) %>% "
+"0","    #hc_xAxis(categories = data$category) %>%"
+"0","    hc_plotOptions(pie = list(depth = 70))"
+"0",""
+"0","hc_member"

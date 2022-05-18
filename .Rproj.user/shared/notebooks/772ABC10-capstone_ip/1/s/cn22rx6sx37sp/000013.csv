@@ -1,0 +1,4 @@
+"0","qty_all <- sales_clean %>% "
+"0","  summarise(sum_qty = sum(Quantity), sum_total = sum(Total))"
+"0",""
+"0","qty_all"

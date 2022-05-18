@@ -1,0 +1,8 @@
+"0","sales_clean <- sales %>% "
+"0","  "
+"0","  mutate("
+"0","    "
+"0","    DateTime = mdy_hm(paste(Date,Time))"
+"0","  )%>% "
+"0","select(-c(gross.margin.percentage,gross.income,Rating, Date, Time))"
+"0","sales_clean"

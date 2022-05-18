@@ -1,0 +1,9 @@
+"0","sales_max_cogs <- sales_clean %>% "
+"0","  group_by(Product.line) %>% "
+"0","  summarise(count_cogs=sum(cogs)) %>% "
+"0","  ungroup() %>% "
+"0","  arrange(-count_cogs) %>% "
+"0","  top_n(1)"
+"1","[38;5;251mSelecting by count_cogs[39m
+"
+"0","sales_max_cogs"

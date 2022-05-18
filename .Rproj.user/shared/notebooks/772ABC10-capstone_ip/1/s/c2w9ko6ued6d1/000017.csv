@@ -1,0 +1,2 @@
+"0","filter(.data = sales_clean,"
+"0","       Gender == ""Male"")"

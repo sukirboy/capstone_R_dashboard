@@ -1,0 +1,125 @@
+shinyServer(function(input, output) {
+
+  output$plot1 <- renderPlotly({
+    
+    vids_count <- vids_clean %>% 
+      group_by(category_id) %>% 
+      summarise(count=n()) %>% 
+      ungroup() %>% 
+      arrange(-count)
+    
+    
+    vids_count2 <- vids_count %>% 
+      mutate(label = glue(
+        "Category: {category_id}
+      Video Count: {count}"
+      ))
+    
+    plot1 <- ggplot(data = vids_count2, aes(x = count, 
+                                            y = reorder(category_id, count), # reorder(A, berdasarkan B)
+                                            text = label)) + 
+      geom_col(aes(fill = count)) +
+      scale_fill_gradient(low="green", high="black") +
+      labs(
+           x = "Video Count",
+           y = NULL) +
+      theme_minimal() +
+      theme(legend.position = "none") 
+    
+    ggplotly(plot1, tooltip = "text")
+  })
+  
+  
+  output$plot2_channel <- renderPlotly({
+    
+  if(input$input_category != "")
+  {
+    vids_10 <- vids_clean %>% 
+      filter(category_id==input$input_category) %>% # filter untuk entertainment
+      group_by(channel_title) %>% 
+      summarise(mean_viewers=mean(views)) %>% 
+      ungroup() %>% 
+      arrange(-mean_viewers) %>% 
+      top_n(10)
+    
+    vids_10 <- vids_10 %>% 
+      mutate(label=glue("Channel: {channel_title}
+                    Average Views: {comma(mean_viewers)}"))
+    
+    plot2 <- ggplot(vids_10, aes(x = reorder(channel_title, mean_viewers), 
+                                 y = mean_viewers,
+                                 text = label)) +
+      geom_segment(aes(x=reorder(channel_title, mean_viewers), xend=reorder(channel_title, mean_viewers), y=0,yend=mean_viewers), color="red") +
+      geom_point(color="black") +
+      coord_flip() +
+      labs(title = glue("Top 10 Channel on {input$input_category}"),
+           x = NULL,
+           y = "Average View") +
+      scale_y_continuous(labels = comma) +
+      theme_minimal()
+    
+    ggplotly(plot2, tooltip = "text")
+  }
+    else
+    {
+      vids_10 <- vids_clean %>% 
+        filter(category_id=="Entertainment") %>% # filter untuk entertainment
+        group_by(channel_title) %>% 
+        summarise(mean_viewers=mean(views)) %>% 
+        ungroup() %>% 
+        arrange(-mean_viewers) %>% 
+        top_n(10)
+      
+      vids_10 <- vids_10 %>% 
+        mutate(label=glue("Channel: {channel_title}
+                    Average Views: {comma(mean_viewers)}"))
+      
+      plot2 <- ggplot(vids_10, aes(x = reorder(channel_title, mean_viewers), 
+                                   y = mean_viewers,
+                                   text = label)) +
+        geom_segment(aes(x=reorder(channel_title, mean_viewers), xend=reorder(channel_title, mean_viewers), y=0,yend=mean_viewers), color="red") +
+        geom_point(color="black") +
+        coord_flip() +
+        labs(title = "Top 10 Channel on Entertainment",
+             x = NULL,
+             y = "Average View") +
+        scale_y_continuous(labels = comma) +
+        theme_minimal()
+      
+      ggplotly(plot2, tooltip = "text")
+    }
+    
+  })
+  
+  output$plot2_viewers <- renderPlotly({
+    
+    
+    vids_trend <- vids_clean %>% 
+      filter(category_id == input$input_category) %>% 
+      group_by(publish_hour) %>% 
+      summarise(avg_views = round(mean(views),2)) %>% 
+      ungroup() %>% 
+      mutate(label = glue(
+        "Publish Hour: {publish_hour}
+    Average Views: {comma(avg_views)}"
+      ))
+    
+    plot3 <- ggplot(vids_trend, aes(x=publish_hour, y= avg_views))+
+      geom_line(col="red") +
+      geom_point(aes(text=label), col="black") +
+      labs(
+        title = glue("Viewers Activity of {input$input_category} Videos"),
+        x = "Publish Hours",
+        y = "Average Views"
+      ) +
+      theme_minimal()
+    
+    ggplotly(plot3, tooltip="text")
+    
+  })
+  
+  output$data_table_youtube <- DT::renderDataTable({
+    vids
+  }) 
+
+})
